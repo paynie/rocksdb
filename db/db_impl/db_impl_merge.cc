@@ -8,6 +8,7 @@
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
 #include "db/db_impl/db_impl.h"
+#include <iostream>
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -64,16 +65,25 @@ Status DBImpl::CheckInRange(const Slice* begin, const Slice* end) {
   }
   for (auto cfd : *versions_->GetColumnFamilySet()) {
     assert(cfd != nullptr);
+    std::string name = cfd->GetName();
     auto* comparator = cfd->user_comparator();
     PinnableSlice smallest, largest;
     bool found = false;
     s = cfd->GetUserKeyRange(&smallest, &largest, &found);
     if (!s.ok()) {
+      std::cout << "Get user key range for cf " << name << " failed " << std::endl;
       return s;
     }
     if (!found) {
+      std::cout << "Get user key range for cf " << name << " not found " << std::endl;
       continue;
     }
+
+    std::cout << "Begin = " << begin->ToString(true)
+              << ", end = " << end->ToString(true)
+              << ", smallest = " << smallest.ToString(true)
+              << ", largest = " << largest.ToString(true) << std::endl;
+    
     if (begin != nullptr && comparator->Compare(smallest, *begin) < 0) {
       return Status::InvalidArgument("Has data smaller than left boundary");
     } else if (end != nullptr && comparator->Compare(largest, *end) >= 0) {

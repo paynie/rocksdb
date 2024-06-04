@@ -65,6 +65,7 @@ Status DBImpl::CheckInRange(const Slice* begin, const Slice* end) {
   }
   for (auto cfd : *versions_->GetColumnFamilySet()) {
     assert(cfd != nullptr);
+    fuck
     std::string name = cfd->GetName();
     auto* comparator = cfd->user_comparator();
     PinnableSlice smallest, largest;
@@ -83,7 +84,7 @@ Status DBImpl::CheckInRange(const Slice* begin, const Slice* end) {
               << ", end = " << end->ToString(true)
               << ", smallest = " << smallest.ToString(true)
               << ", largest = " << largest.ToString(true) << std::endl;
-    
+
     if (begin != nullptr && comparator->Compare(smallest, *begin) < 0) {
       return Status::InvalidArgument("Has data smaller than left boundary");
     } else if (end != nullptr && comparator->Compare(largest, *end) >= 0) {

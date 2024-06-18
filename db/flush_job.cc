@@ -508,7 +508,7 @@ Status FlushJob::MemPurge() {
     SequenceNumber new_first_seqno = kMaxSequenceNumber;
 
     ROCKS_LOG_INFO(db_options_.info_log, "Paynie add set first and earliest seq for mem: %lu"
-                                         ", first seq id = %llu, earliest seq id = %lu",
+                                         ", first seq id = %lu, earliest seq id = %lu",
                    new_mem->GetID(),
                    new_mem->GetFirstSequenceNumber(),
                    new_mem->GetEarliestSequenceNumber());

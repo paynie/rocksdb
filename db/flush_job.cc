@@ -239,10 +239,8 @@ Status FlushJob::Run(LogsWithPrepTracker* prep_tracker, FileMetaData* file_meta,
   }
   Status mempurge_s = Status::NotFound("No MemPurge.");
 
-  ROCKS_LOG_INFO(db_options_.info_log, "Paynie add before MemPurge, db_options_.experimental_mempurge_threshold = %lf, "
-                 "cfd_->GetFlushReason() = %d",
-                 db_options_.experimental_mempurge_threshold,
-                 cfd_->GetFlushReason());
+  ROCKS_LOG_INFO(db_options_.info_log, "Paynie add before MemPurge, db_options_.experimental_mempurge_threshold = %lf, ",
+                 db_options_.experimental_mempurge_threshold);
 
   if ((db_options_.experimental_mempurge_threshold > 0.0) &&
       (cfd_->GetFlushReason() == FlushReason::kWriteBufferFull) &&
@@ -419,7 +417,7 @@ Status FlushJob::MemPurge() {
   // and earliest_seqno of the mempurged memtables.
   for (const auto& mem : mems_) {
     ROCKS_LOG_INFO(db_options_.info_log, "Paynie add get first and earliest seq memtable: %lu"
-                                         ", first seq id = %llu, earliest seq id = %lu",
+                                         ", first seq id = %lu, earliest seq id = %lu",
                    mem->GetID(),
                    mem->GetFirstSequenceNumber(),
                    mem->GetEarliestSequenceNumber());

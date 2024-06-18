@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <string>
 
 #include "db/builder.h"
 #include "db/db_iter.h"
@@ -403,7 +404,7 @@ Status FlushJob::MemPurge() {
   std::vector<std::unique_ptr<FragmentedRangeTombstoneIterator>>
       range_del_iters;
   for (MemTable* m : mems_) {
-    ROCKS_LOG_INFO(db_options_.info_log, "Paynie add create iter for memtable: %llu", m->GetID());
+    ROCKS_LOG_INFO(db_options_.info_log, "Paynie add create iter for memtable: %lu", m->GetID());
     memtables.push_back(m->NewIterator(ro, &arena));
     auto* range_del_iter = m->NewRangeTombstoneIterator(ro, kMaxSequenceNumber);
     if (range_del_iter != nullptr) {
@@ -417,8 +418,8 @@ Status FlushJob::MemPurge() {
   // Pick first and earliest seqno as min of all first_seqno
   // and earliest_seqno of the mempurged memtables.
   for (const auto& mem : mems_) {
-    ROCKS_LOG_INFO(db_options_.info_log, "Paynie add get first and earliest seq memtable: %llu"
-                                         ", first seq id = %llu, earliest seq id = %llu",
+    ROCKS_LOG_INFO(db_options_.info_log, "Paynie add get first and earliest seq memtable: %lu"
+                                         ", first seq id = %llu, earliest seq id = %lu",
                    mem->GetID(),
                    mem->GetFirstSequenceNumber(),
                    mem->GetEarliestSequenceNumber());
@@ -508,8 +509,8 @@ Status FlushJob::MemPurge() {
     new_mem->SetFirstSequenceNumber(first_seqno);
     SequenceNumber new_first_seqno = kMaxSequenceNumber;
 
-    ROCKS_LOG_INFO(db_options_.info_log, "Paynie add set first and earliest seq for mem: %llu"
-                                         ", first seq id = %llu, earliest seq id = %llu",
+    ROCKS_LOG_INFO(db_options_.info_log, "Paynie add set first and earliest seq for mem: %lu"
+                                         ", first seq id = %llu, earliest seq id = %lu",
                    new_mem->GetID(),
                    new_mem->GetFirstSequenceNumber(),
                    new_mem->GetEarliestSequenceNumber());
@@ -525,9 +526,9 @@ Status FlushJob::MemPurge() {
 
       // Should we update "OldestKeyTime" ???? -> timestamp appear
       // to still be an "experimental" feature.
-      ROCKS_LOG_INFO(db_options_.info_log, "Paynie add before mem add : %llu"
-                                           ", new_first_seqno = %llu"
-                                           ", key seq id = %llu"
+      ROCKS_LOG_INFO(db_options_.info_log, "Paynie add before mem add : %lu"
+                                           ", new_first_seqno = %lu"
+                                           ", key seq id = %lu"
                                            ", key = %s",
                      new_mem->GetID(),
                      new_first_seqno,
@@ -558,8 +559,8 @@ Status FlushJob::MemPurge() {
       // and destroy new_mem.
       if (new_mem->ApproximateMemoryUsage() > maxSize) {
         ROCKS_LOG_INFO(db_options_.info_log, "Mempurge filled more than one memtable"
-                       ", new_mem->ApproximateMemoryUsage() = %lld"
-                       ", maxSize = %lld",
+                       ", new_mem->ApproximateMemoryUsage() = %lu"
+                       ", maxSize = %lu",
                        new_mem->ApproximateMemoryUsage(), maxSize);
 
         s = Status::Aborted("Mempurge filled more than one memtable.");
@@ -620,7 +621,7 @@ Status FlushJob::MemPurge() {
     if (s.ok() && (new_first_seqno != kMaxSequenceNumber)) {
 
       ROCKS_LOG_INFO(db_options_.info_log, "s.ok() && (new_first_seqno != kMaxSequenceNumber)"
-                     ", new_first_seqno = %lld",
+                     ", new_first_seqno = %lu",
                      new_first_seqno);
 
       // Rectify the first sequence number, which (unlike the earliest seq

@@ -571,7 +571,15 @@ Status MemTable::Add(SequenceNumber s, ValueType type,
   size_t ts_sz = GetInternalKeyComparator().user_comparator()->timestamp_size();
   Slice key_without_ts = StripTimestampFromUserKey(key, ts_sz);
 
+  ROCKS_LOG_INFO(logger_, "Paynie add in memtable %lu, add key = %s, value = %s",
+                 this->GetID(),
+                 get_b2hex(key.data(), key.size()).c_str(),
+                 get_b2hex(value.data(), value.size()).c_str());
+
   if (!allow_concurrent) {
+    ROCKS_LOG_INFO(logger_, "Paynie add in memtable %lu add allow_concurrent = false",
+                   this->GetID());
+
     // Extract prefix for insert with hint.
     if (insert_with_hint_prefix_extractor_ != nullptr &&
         insert_with_hint_prefix_extractor_->InDomain(key_slice)) {
@@ -621,9 +629,19 @@ Status MemTable::Add(SequenceNumber s, ValueType type,
     if (s > largest_seqno_) {
       largest_seqno_.store(s, std::memory_order_relaxed);
     }
+
+    ROCKS_LOG_INFO(logger_, "Paynie add in memtable %lu add first_seqno_ = %lu, earliest_seqno_ = %lu, largest_seqno_ = %d",
+                   this->GetID(),
+                   first_seqno_.load(std::memory_order_relaxed),
+                   earliest_seqno_.load(std::memory_order_relaxed),
+                   largest_seqno_.load(std::memory_order_relaxed));
+
     assert(post_process_info == nullptr);
     UpdateFlushState();
   } else {
+    ROCKS_LOG_INFO(logger_, "Paynie add in memtable %lu add allow_concurrent = true",
+                   this->GetID());
+
     bool res = (hint == nullptr)
                    ? table->InsertKeyConcurrently(handle)
                    : table->InsertKeyWithHintConcurrently(handle, hint);
@@ -663,6 +681,12 @@ Status MemTable::Add(SequenceNumber s, ValueType type,
     while (s > cur_largest_seqno &&
            !largest_seqno_.compare_exchange_weak(cur_largest_seqno, s)) {
     }
+
+    ROCKS_LOG_INFO(logger_, "Paynie add in memtable %lu add first_seqno_ = %lu, earliest_seqno_ = %lu, largest_seqno_ = %d",
+                   this->GetID(),
+                   first_seqno_.load(std::memory_order_relaxed),
+                   earliest_seqno_.load(std::memory_order_relaxed),
+                   largest_seqno_.load(std::memory_order_relaxed));
   }
   if (type == kTypeRangeDeletion) {
     is_range_del_table_empty_.store(false, std::memory_order_relaxed);

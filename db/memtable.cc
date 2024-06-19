@@ -630,7 +630,7 @@ Status MemTable::Add(SequenceNumber s, ValueType type,
       largest_seqno_.store(s, std::memory_order_relaxed);
     }
 
-    ROCKS_LOG_INFO(logger_, "Paynie add in memtable %lu add first_seqno_ = %lu, earliest_seqno_ = %lu, largest_seqno_ = %d",
+    ROCKS_LOG_INFO(logger_, "Paynie add in memtable %lu add first_seqno_ = %lu, earliest_seqno_ = %lu, largest_seqno_ = %lu",
                    this->GetID(),
                    first_seqno_.load(std::memory_order_relaxed),
                    earliest_seqno_.load(std::memory_order_relaxed),
@@ -682,7 +682,7 @@ Status MemTable::Add(SequenceNumber s, ValueType type,
            !largest_seqno_.compare_exchange_weak(cur_largest_seqno, s)) {
     }
 
-    ROCKS_LOG_INFO(logger_, "Paynie add in memtable %lu add first_seqno_ = %lu, earliest_seqno_ = %lu, largest_seqno_ = %d",
+    ROCKS_LOG_INFO(logger_, "Paynie add in memtable %lu add first_seqno_ = %lu, earliest_seqno_ = %lu, largest_seqno_ = %lu",
                    this->GetID(),
                    first_seqno_.load(std::memory_order_relaxed),
                    earliest_seqno_.load(std::memory_order_relaxed),

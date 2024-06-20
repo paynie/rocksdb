@@ -464,20 +464,6 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
                               post_callback);
   }
 
-  ROCKS_LOG_INFO(
-      immutable_db_options_.info_log,
-      "Paynie add in WriteImpl options: write_options.sync = %d, write_options.disableWAL = %d "
-      ", two_write_queues_ = %d, enable_pipelined_write = %d, enable_multi_batch_write = %d "
-      ", seq_per_batch_ = %d, unordered_write = %d, disable_memtable = %d ",
-      write_options.sync,
-      write_options.disableWAL,
-      two_write_queues_,
-      immutable_db_options_.enable_pipelined_write,
-      immutable_db_options_.enable_multi_batch_write,
-      seq_per_batch_,
-      immutable_db_options_.unordered_write,
-      disable_memtable);
-
   PERF_TIMER_GUARD(write_pre_and_post_process_time);
   WriteThread::Writer w(write_options, my_batch, callback, post_callback,
                         log_ref, disable_memtable, batch_cnt,
@@ -486,21 +472,13 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
 
   write_thread_.JoinBatchGroup(&w);
   if (w.state == WriteThread::STATE_PARALLEL_MEMTABLE_WRITER) {
-    ROCKS_LOG_INFO(
-        immutable_db_options_.info_log,
-        "w.state == WriteThread::STATE_PARALLEL_MEMTABLE_WRITER");
     // we are a non-leader in a parallel group
-
     if (w.ShouldWriteToMemtable()) {
       PERF_TIMER_STOP(write_pre_and_post_process_time);
       PERF_TIMER_GUARD(write_memtable_time);
 
       ColumnFamilyMemTablesImpl column_family_memtables(
           versions_->GetColumnFamilySet());
-
-      ROCKS_LOG_INFO(
-          immutable_db_options_.info_log,
-          "Paynie add WriteBatchInternal::InsertInto, w.sequence = %lu", w.sequence);
 
       w.status = WriteBatchInternal::InsertInto(
           &w, w.sequence, &column_family_memtables, &flush_scheduler_,
@@ -513,10 +491,6 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
     }
 
     if (write_thread_.CompleteParallelMemTableWriter(&w)) {
-      ROCKS_LOG_INFO(
-          immutable_db_options_.info_log,
-          "write_thread_.CompleteParallelMemTableWriter(&w)");
-
       // we're responsible for exit batch group
       // TODO(myabandeh): propagate status to write_group
       auto last_sequence = w.write_group->last_sequence;
@@ -1312,17 +1286,7 @@ Status DBImpl::PreprocessWrite(const WriteOptions& write_options,
 
   PERF_TIMER_GUARD(write_scheduling_flushes_compactions_time);
 
-  ROCKS_LOG_INFO(
-      immutable_db_options_.info_log,
-      "Paynie add in PreprocessWrite, status = %s", status.ToString().c_str());
-
   if (UNLIKELY(status.ok() && total_log_size_ > GetMaxTotalWalSize())) {
-    ROCKS_LOG_INFO(
-        immutable_db_options_.info_log,
-        "Paynie add in PreprocessWrite, total_log_size_ = %lu, MaxTotalWalSize = %lu",
-        total_log_size_.load(),
-        GetMaxTotalWalSize());
-
     assert(versions_);
     InstrumentedMutexLock l(&mutex_);
     const ColumnFamilySet* const column_families =
@@ -1330,11 +1294,6 @@ Status DBImpl::PreprocessWrite(const WriteOptions& write_options,
     assert(column_families);
     size_t num_cfs = column_families->NumberOfColumnFamilies();
     assert(num_cfs >= 1);
-
-    ROCKS_LOG_INFO(
-        immutable_db_options_.info_log,
-        "Paynie add in PreprocessWrite, num_cfs = %lu",
-        num_cfs);
 
     if (num_cfs > 1) {
       WaitForPendingWrites();
@@ -2145,19 +2104,6 @@ Status DBImpl::SwitchMemtable(ColumnFamilyData* cfd, WriteContext* context) {
   memtable_info.largest_seqno = cfd->mem()->GetLargestSequenceNumber();
   memtable_info.num_entries = cfd->mem()->num_entries();
   memtable_info.num_deletes = cfd->mem()->num_deletes();
-
-  ROCKS_LOG_INFO(immutable_db_options_.info_log, "Paynie add in SwitchMemtable, cf name = %s"
-                 ", first seq = %lu, earliest_seqno = %lu"
-                 ", largest_seqno = %lu, num_entries = %lu"
-                 ", num_deletes = %lu, mem id = %lu",
-                 memtable_info.cf_name.c_str(),
-                 memtable_info.first_seqno,
-                 memtable_info.earliest_seqno,
-                 memtable_info.largest_seqno,
-                 memtable_info.num_entries,
-                 memtable_info.num_deletes,
-                 cfd->mem()->GetID());
-
 #endif  // ROCKSDB_LITE
   // Log this later after lock release. It may be outdated, e.g., if background
   // flush happens before logging, but that should be ok.

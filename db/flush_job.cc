@@ -238,15 +238,9 @@ Status FlushJob::Run(LogsWithPrepTracker* prep_tracker, FileMetaData* file_meta,
     prev_cpu_read_nanos = IOSTATS(cpu_read_nanos);
   }
   Status mempurge_s = Status::NotFound("No MemPurge.");
-
-  ROCKS_LOG_INFO(db_options_.info_log, "Paynie add before MemPurge, db_options_.experimental_mempurge_threshold = %lf, ",
-                 db_options_.experimental_mempurge_threshold);
-
   if ((db_options_.experimental_mempurge_threshold > 0.0) &&
       (cfd_->GetFlushReason() == FlushReason::kWriteBufferFull) &&
       (!mems_.empty()) && MemPurgeDecider()) {
-    ROCKS_LOG_INFO(db_options_.info_log, "Paynie add before MemPurge");
-
     mempurge_s = MemPurge();
     if (!mempurge_s.ok()) {
       // Mempurge is typically aborted when the output
@@ -274,7 +268,6 @@ Status FlushJob::Run(LogsWithPrepTracker* prep_tracker, FileMetaData* file_meta,
   }
   Status s;
 
-  ROCKS_LOG_INFO(db_options_.info_log, "mempurge_s = %s", mempurge_s.ToString().c_str());
   if (mempurge_s.ok()) {
     base_->Unref();
     s = Status::OK();
@@ -375,8 +368,6 @@ std::string get_b2hex(const char * source, int len) {
 }
 
 Status FlushJob::MemPurge() {
-  ROCKS_LOG_INFO(db_options_.info_log, "Paynie add In MemPurge");
-
   Status s;
   db_mutex_->AssertHeld();
   db_mutex_->Unlock();
@@ -402,7 +393,6 @@ Status FlushJob::MemPurge() {
   std::vector<std::unique_ptr<FragmentedRangeTombstoneIterator>>
       range_del_iters;
   for (MemTable* m : mems_) {
-    ROCKS_LOG_INFO(db_options_.info_log, "Paynie add create iter for memtable: %lu", m->GetID());
     memtables.push_back(m->NewIterator(ro, &arena));
     auto* range_del_iter = m->NewRangeTombstoneIterator(ro, kMaxSequenceNumber);
     if (range_del_iter != nullptr) {
@@ -416,11 +406,6 @@ Status FlushJob::MemPurge() {
   // Pick first and earliest seqno as min of all first_seqno
   // and earliest_seqno of the mempurged memtables.
   for (const auto& mem : mems_) {
-    ROCKS_LOG_INFO(db_options_.info_log, "Paynie add get first and earliest seq memtable: %lu"
-                                         ", first seq id = %lu, earliest seq id = %lu",
-                   mem->GetID(),
-                   mem->GetFirstSequenceNumber(),
-                   mem->GetEarliestSequenceNumber());
     first_seqno = mem->GetFirstSequenceNumber() < first_seqno
                       ? mem->GetFirstSequenceNumber()
                       : first_seqno;
@@ -506,13 +491,6 @@ Status FlushJob::MemPurge() {
     // Likewise for first seq number.
     new_mem->SetFirstSequenceNumber(first_seqno);
     SequenceNumber new_first_seqno = kMaxSequenceNumber;
-
-    ROCKS_LOG_INFO(db_options_.info_log, "Paynie add set first and earliest seq for mem: %lu"
-                                         ", first seq id = %lu, earliest seq id = %lu",
-                   new_mem->GetID(),
-                   new_mem->GetFirstSequenceNumber(),
-                   new_mem->GetEarliestSequenceNumber());
-
     c_iter.SeekToFirst();
 
     // Key transfer
@@ -524,14 +502,6 @@ Status FlushJob::MemPurge() {
 
       // Should we update "OldestKeyTime" ???? -> timestamp appear
       // to still be an "experimental" feature.
-      ROCKS_LOG_INFO(db_options_.info_log, "Paynie add before mem add : %lu"
-                                           ", new_first_seqno = %lu"
-                                           ", key seq id = %lu"
-                                           ", key = %s",
-                     new_mem->GetID(),
-                     new_first_seqno,
-                     ikey.sequence,
-                     get_b2hex(ikey.user_key.data(), ikey.user_key.size()).c_str());
 
       s = new_mem->Add(
           ikey.sequence, ikey.type, ikey.user_key, value,
@@ -544,9 +514,6 @@ Status FlushJob::MemPurge() {
                      // when concurrent_memtable_writes is switched off.
           nullptr);  // hint, only used when concurrent_memtable_writes_
                      // is switched on.
-
-      ROCKS_LOG_INFO(db_options_.info_log, "Paynie add before mem add status : %s",
-                     s.ToString().c_str());
 
       if (!s.ok()) {
         break;
@@ -617,11 +584,6 @@ Status FlushJob::MemPurge() {
     // decide if it is flushed to storage or kept in the imm()
     // memtable list (memory).
     if (s.ok() && (new_first_seqno != kMaxSequenceNumber)) {
-
-      ROCKS_LOG_INFO(db_options_.info_log, "s.ok() && (new_first_seqno != kMaxSequenceNumber)"
-                     ", new_first_seqno = %lu",
-                     new_first_seqno);
-
       // Rectify the first sequence number, which (unlike the earliest seq
       // number) needs to be present in the new memtable.
       new_mem->SetFirstSequenceNumber(new_first_seqno);

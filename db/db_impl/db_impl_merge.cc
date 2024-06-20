@@ -62,13 +62,7 @@ Status DBImpl::ValidateForMerge(const MergeInstanceOptions& mopts,
 
 Status DBImpl::CheckInRange(const Slice* begin, const Slice* end) {
   Status s;
-  ROCKS_LOG_INFO(immutable_db_options_.info_log,
-                 "paynie add in CheckInRange");
-  std::cout << "paynie add in CheckRange" << std::endl;
-
   if (begin == nullptr && end == nullptr) {
-    ROCKS_LOG_INFO(immutable_db_options_.info_log,
-                   "paynie add in CheckInRange begin == nullptr && end == nullptr");
     return s;
   }
   for (auto cfd : *versions_->GetColumnFamilySet()) {
@@ -79,42 +73,12 @@ Status DBImpl::CheckInRange(const Slice* begin, const Slice* end) {
     bool found = false;
     s = cfd->GetUserKeyRange(&smallest, &largest, &found);
     if (!s.ok()) {
-      ROCKS_LOG_INFO(immutable_db_options_.info_log,
-                     "paynie add in CheckInRange Get user key range for cf %s failed", name.c_str());
-      std::cout << "Get user key range for cf " << name << " failed " << std::endl;
       return s;
     }
     if (!found) {
-      ROCKS_LOG_INFO(immutable_db_options_.info_log,
-                     "paynie add in CheckInRange Get user key range for cf %s no found", name.c_str());
-      std::cout << "Get user key range for cf " << name << " not found " << std::endl;
       continue;
     }
-
-    if (begin != nullptr) {
-      ROCKS_LOG_INFO(immutable_db_options_.info_log,
-                         "paynie add in CheckInRange, name = %s, begin = %s, smallest = %s, largest = %s",
-                         name.c_str(), begin->ToString(true).c_str(),
-                         smallest.ToString(true).c_str(), largest.ToString(true).c_str());
-
-      std::cout << "paynie add Cf name" << name.c_str()
-                << "Begin = " << begin->ToString(true)
-                << ", smallest = " << smallest.ToString(true)
-                << ", largest = " << largest.ToString(true) << std::endl;
-    }
-
-    if(end != nullptr) {
-      ROCKS_LOG_INFO(immutable_db_options_.info_log,
-                     "paynie add in CheckInRange, name = %s, end = %s, smallest = %s, largest = %s",
-                     name.c_str(), end->ToString(true).c_str(),
-                     smallest.ToString(true).c_str(), largest.ToString(true).c_str());
-
-      std::cout << "paynie add Cf name" << name.c_str()
-                << ", end = " << end->ToString(true)
-                << ", smallest = " << smallest.ToString(true)
-                << ", largest = " << largest.ToString(true) << std::endl;
-    }
-
+    
     if (begin != nullptr && comparator->Compare(smallest, *begin) < 0) {
       return Status::InvalidArgument("Has data smaller than left boundary");
     } else if (end != nullptr && comparator->Compare(largest, *end) >= 0) {

@@ -1479,9 +1479,9 @@ Status ColumnFamilyData::ValidateOptions(
       cf_options.periodic_compaction_seconds != kDefaultPeriodicCompSecs) {
     if (!cf_options.table_factory->IsInstanceOf(
             TableFactory::kBlockBasedTableName())) {
-      return Status::NotSupported(
-          "Periodic Compaction is only supported in "
-          "Block-Based Table format. ");
+      //return Status::NotSupported(
+      //    "Periodic Compaction is only supported in "
+      //    "Block-Based Table format. ");
     }
   }
 
